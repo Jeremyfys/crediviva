@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+
+  mongo:
+    image: mongo:8.0.0-rc17
+    env_file: ./backend/.env
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo_data:/data/db
+      - ./backend/scripts:/docker-entrypoint-initdb.d
+
+  nestjs-app:
+    container_name: nestjs-app
+    depends_on:
+      - mongo
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: ./backend/.env
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    
+  nextjs-app:
+    container_name: nextjs-app
+    depends_on: 
+      - nestjs-app
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    env_file: ./client/.env
+    ports:
+      - 3001:3001
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes: 
+  mongo_data:
